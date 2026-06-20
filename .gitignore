@@ -6,4 +6,5 @@ node_modules/
 .aws-sam/
 dist/
 coverage/
+graphify-out/
 .DS_Store
