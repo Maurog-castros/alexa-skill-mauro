@@ -8,9 +8,9 @@ Usuario → Alexa → Lambda → OpenClaw Gateway → agente care → Qwen / GPT
 
 ## Uso por voz
 
-- "Alexa, abre Care"
-- "Alexa, habla con Care"
-- Luego, en sesión: "¿qué alertas hay activas?", "resúmeme el estado de TI", etc.
+- "Alexa, abre agente personal Mauro"
+- "Alexa, cambia a modo agente personal Mauro"
+- Luego, en sesión: "¿cual es el estado de los containers?", "Resumen de avances en proyectos en base a repos de github", etc.
 
 ## Estructura
 
@@ -75,8 +75,9 @@ cd ~/Dev/openclaw-mauro/openclaw && docker compose up -d openclaw-gateway
 Si OpenClaw tarda más de ~2 s, Alexa recibe mensajes intermedios mientras Lambda sigue esperando:
 
 - "Dame un momento, Care está pensando." (2 s)
-- "Sigo consultando, casi termino." (7 s)
-- "Todavía estoy procesando tu solicitud." (14 s)
+
+La respuesta completa debe terminar antes del límite de Alexa. El cliente cancela
+OpenClaw a los 6 segundos para dejar margen a Lambda.
 
 Requiere `.withApiClient(new Alexa.DefaultApiClient())` en el handler (ya incluido).
 
@@ -90,19 +91,21 @@ sam build -t infrastructure/template.yaml
 sam deploy --guided \
   --parameter-overrides \
     OpenClawGatewayUrl=https://tu-gateway \
-    OpenClawGatewayToken=TU_TOKEN
+    OpenClawGatewayToken=TU_TOKEN \
+    AlexaSkillId=amzn1.ask.skill.TU_SKILL_ID
 ```
 
 Registra el ARN de la Lambda en [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask) y sube `skill-package/interactionModel.json`.
 
 ## Variables de entorno
 
-| Variable | Default | Descripción |
-|---|---|---|
-| `OPENCLAW_GATEWAY_URL` | — | URL base del Gateway |
-| `OPENCLAW_GATEWAY_TOKEN` | — | Bearer token del Gateway |
-| `OPENCLAW_AGENT_ID` | `care` | Agente destino |
-| `OPENCLAW_TIMEOUT_MS` | `25000` | Timeout de la petición HTTP |
+| Variable                   | Default   | Descripción                 |
+| -------------------------- | --------- | ---------------------------- |
+| `OPENCLAW_GATEWAY_URL`   | —        | URL base del Gateway         |
+| `OPENCLAW_GATEWAY_TOKEN` | —        | Bearer token del Gateway     |
+| `OPENCLAW_AGENT_ID`      | `care`  | Agente destino               |
+| `OPENCLAW_TIMEOUT_MS`    | `6000` | Timeout de la petición HTTP |
+| `ALEXA_SKILL_ID`         | —      | ID permitido para invocar la Lambda |
 
 ## Próximos agentes
 

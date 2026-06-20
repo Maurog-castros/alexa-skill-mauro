@@ -15,16 +15,6 @@ function startCareSession(attributes) {
   return {
     ...attributes,
     activeAgent: DEFAULT_AGENT_ID,
-    history: [],
-  };
-}
-
-function appendHistory(attributes, role, content) {
-  const history = [...(attributes.history || []), { role, content }];
-  const maxMessages = Number(process.env.OPENCLAW_HISTORY_LIMIT || 10);
-  return {
-    ...attributes,
-    history: history.slice(-maxMessages),
   };
 }
 
@@ -39,7 +29,7 @@ const LaunchCareIntentHandler = {
     handlerInput.attributesManager.setSessionAttributes(attributes);
 
     return handlerInput.responseBuilder
-      .speak(`Hola, soy Care. ¿En qué te puedo ayudar?`)
+      .speak('Hola, soy tu agente personal. ¿En qué te puedo ayudar?')
       .reprompt('Puedes hacerme una pregunta o pedirme algo.')
       .getResponse();
   },
@@ -70,25 +60,17 @@ const ChatIntentHandler = {
     }
 
     const userId = getUserId(handlerInput);
-    let attributes = handlerInput.attributesManager.getSessionAttributes();
-
     try {
       const reply = await chatWithCare(handlerInput, {
         userId,
         message,
-        history: attributes.history || [],
       });
-
-      attributes = appendHistory(appendHistory(attributes, 'user', message), 'assistant', reply);
-      handlerInput.attributesManager.setSessionAttributes(attributes);
 
       return handlerInput.responseBuilder
         .speak(truncateForAlexa(reply))
         .reprompt('¿Necesitas algo más?')
         .getResponse();
     } catch (error) {
-      console.error('OpenClaw error:', error);
-
       return handlerInput.responseBuilder
         .speak('No pude contactar a Care en este momento. Inténtalo de nuevo en unos segundos.')
         .reprompt('¿Quieres intentarlo otra vez?')
@@ -113,8 +95,8 @@ const HelpIntentHandler = {
   },
   handle(handlerInput) {
     return handlerInput.responseBuilder
-      .speak('Puedes decir: Alexa, abre Care, y luego hablar conmigo con naturalidad. También puedes decir salir para terminar.')
-      .reprompt('¿Quieres empezar a hablar con Care?')
+      .speak('Puedes decir: Alexa, abre agente personal Mauro. Luego hazme una pregunta o di salir para terminar.')
+      .reprompt('¿Quieres hacer una pregunta?')
       .getResponse();
   },
 };
@@ -150,18 +132,11 @@ const FallbackIntentHandler = {
       && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent'
       && isCareSession(handlerInput.attributesManager.getSessionAttributes());
   },
-  async handle(handlerInput) {
-    handlerInput.requestEnvelope.request.intent = {
-      name: 'ChatIntent',
-      slots: {
-        message: {
-          name: 'message',
-          value: 'No entendí bien lo anterior. ¿Puedes ayudarme con lo que estábamos hablando?',
-        },
-      },
-    };
-
-    return ChatIntentHandler.handle(handlerInput);
+  handle(handlerInput) {
+    return handlerInput.responseBuilder
+      .speak('No entendí la solicitud. ¿Puedes decirla de otra forma?')
+      .reprompt('¿Qué necesitas?')
+      .getResponse();
   },
 };
 
@@ -178,7 +153,7 @@ const ErrorHandler = {
   },
 };
 
-exports.handler = Alexa.SkillBuilders.custom()
+const skillBuilder = Alexa.SkillBuilders.custom()
   .addRequestHandlers(
     LaunchRequestHandler,
     LaunchCareIntentHandler,
@@ -189,5 +164,10 @@ exports.handler = Alexa.SkillBuilders.custom()
     SessionEndedRequestHandler,
   )
   .addErrorHandlers(ErrorHandler)
-  .withApiClient(new Alexa.DefaultApiClient())
-  .lambda();
+  .withApiClient(new Alexa.DefaultApiClient());
+
+if (process.env.ALEXA_SKILL_ID) {
+  skillBuilder.withSkillId(process.env.ALEXA_SKILL_ID);
+}
+
+exports.handler = skillBuilder.lambda();

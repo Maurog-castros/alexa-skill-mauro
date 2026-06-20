@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "care",
+      "invocationName": "agente personal mauro",
       "intents": [
         {
           "name": "LaunchCareIntent",

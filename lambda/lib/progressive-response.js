@@ -1,7 +1,5 @@
 const PROGRESSIVE_MESSAGES = [
   { afterMs: 2000, text: 'Dame un momento, Care está pensando.' },
-  { afterMs: 7000, text: 'Sigo consultando, casi termino.' },
-  { afterMs: 14000, text: 'Todavía estoy procesando tu solicitud.' },
 ];
 
 async function sendProgressiveResponse(handlerInput, text) {
