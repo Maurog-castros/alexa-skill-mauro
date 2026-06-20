@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Alexa skill bridge hacia el agente OpenClaw /care
+
+Parameters:
+  OpenClawGatewayUrl:
+    Type: String
+    Description: URL base del Gateway OpenClaw (ej. https://openclaw.example.com)
+  OpenClawGatewayToken:
+    Type: String
+    NoEcho: true
+    Description: Token de autenticación del Gateway OpenClaw
+  OpenClawAgentId:
+    Type: String
+    Default: care
+    Description: ID del agente OpenClaw destino
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs20.x
+    MemorySize: 256
+
+Resources:
+  CareAlexaSkillFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambda/
+      Handler: index.handler
+      Description: Puente Alexa -> OpenClaw agente care
+      Environment:
+        Variables:
+          OPENCLAW_GATEWAY_URL: !Ref OpenClawGatewayUrl
+          OPENCLAW_GATEWAY_TOKEN: !Ref OpenClawGatewayToken
+          OPENCLAW_AGENT_ID: !Ref OpenClawAgentId
+      Events:
+        AlexaSkill:
+          Type: AlexaSkill
+
+Outputs:
+  LambdaArn:
+    Description: ARN de la función Lambda para registrar en Alexa Developer Console
+    Value: !GetAtt CareAlexaSkillFunction.Arn

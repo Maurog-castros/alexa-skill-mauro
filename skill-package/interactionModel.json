@@ -1,0 +1,56 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "care",
+      "intents": [
+        {
+          "name": "LaunchCareIntent",
+          "samples": [
+            "habla con care",
+            "abre care",
+            "inicia care",
+            "quiero hablar con care",
+            "conecta con care",
+            "activa care"
+          ]
+        },
+        {
+          "name": "ChatIntent",
+          "slots": [
+            {
+              "name": "message",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "{message}",
+            "dime {message}",
+            "pregúntale a care {message}",
+            "care {message}"
+          ]
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}

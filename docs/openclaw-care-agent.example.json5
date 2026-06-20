@@ -1,0 +1,27 @@
+// Ejemplo de agente /care en ~/.openclaw/openclaw.json
+{
+  gateway: {
+    http: {
+      endpoints: {
+        chatCompletions: { enabled: true },
+      },
+    },
+  },
+
+  agents: {
+    list: [
+      {
+        id: "care",
+        default: true,
+        name: "Care",
+        workspace: "~/.openclaw/workspace-care",
+        agentDir: "~/.openclaw/agents/care/agent",
+        identity: {
+          name: "Care",
+          theme: "Asistente personal de cuidado y soporte",
+          emoji: "💙",
+        },
+      },
+    ],
+  },
+}
