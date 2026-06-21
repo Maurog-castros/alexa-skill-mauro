@@ -1,16 +1,24 @@
 # alexa-skill-mauro
 
-Interfaz de voz de Alexa para agentes OpenClaw. El primer agente es **`/care`**.
+Interfaz de voz de Alexa para agentes OpenClaw. El agente MVP es **`mauro`**.
 
 ```
-Usuario → Alexa → Lambda → OpenClaw Gateway → agente care → Qwen / GPT / Claude
+Usuario → Alexa → Lambda → OpenClaw Gateway → agente mauro
 ```
+
+## Criterios de aceptación MVP
+
+- "Alexa, abre agente personal Mauro" inicia la skill.
+- Respuesta antes de ~7 s (OpenClaw aborta a los 6 s).
+- 10 consultas consecutivas estables.
+- Timeout con mensaje degradado claro (no corte abrupto).
+- Contexto vía sesión OpenClaw; cada turno envía solo el mensaje actual.
+- Token nunca en voz ni logs.
 
 ## Uso por voz
 
 - "Alexa, abre agente personal Mauro"
-- "Alexa, cambia a modo agente personal Mauro"
-- Luego, en sesión: "¿cual es el estado de los containers?", "Resumen de avances en proyectos en base a repos de github", etc.
+- En sesión: "¿cuál es el estado de los containers?", etc.
 
 ## Estructura
 
@@ -18,95 +26,115 @@ Usuario → Alexa → Lambda → OpenClaw Gateway → agente care → Qwen / GPT
 skill-package/interactionModel.json   # modelo de voz (es-ES)
 lambda/                               # handler ASK → OpenClaw
 infrastructure/template.yaml          # despliegue AWS SAM
-docs/openclaw-care-agent.example.json5
+docs/secure-gateway.md                # HTTPS, token, rate limit
 ```
 
-## Requisitos OpenClaw
+## Fase 1 — Puente estabilizado
 
-1. Gateway accesible desde Lambda (Tailscale, túnel o reverse proxy con auth).
-2. Endpoint HTTP habilitado:
+| Comportamiento | Implementación |
+| --- | --- |
+| Agente unificado `mauro` | `OPENCLAW_AGENT_ID`, constantes, intents |
+| Timeout OpenClaw 6 s | `OPENCLAW_TIMEOUT_MS=6000` + `AbortController` |
+| Una respuesta progresiva ~2 s | `progressive-response.js` |
+| Degradación en timeout | `SPEECH_TIMEOUT` en `ChatIntent` |
+| Markdown + límite 600–900 chars | `speech.js` |
+| Solo mensaje actual | `messages: [{ role: 'user', content }]` |
+| Logs estructurados | `logger.js`: requestId, agent, result, durationMs |
+
+## Fase 2 — Endpoint seguro
+
+Publicar **`https://alexa.maurocastro.cl`** (solo `/v1/chat/completions`):
 
 ```bash
-openclaw config set gateway.http.endpoints.chatCompletions.enabled true
-openclaw gateway restart
+chmod +x scripts/setup-alexa-endpoint.sh
+./scripts/setup-alexa-endpoint.sh
 ```
 
-3. Agente `care` definido en `~/.openclaw/openclaw.json` (ver ejemplo en `docs/`).
+Detalle: [docs/secure-gateway.md](docs/secure-gateway.md) y `~/Dev/infra/maurocastro-dmz/docs/ALEXA-ENDPOINT.md`.
 
-La Lambda llama a:
+## Fase 3 — Tests
 
-```http
-POST /v1/chat/completions
-model: openclaw/care
-x-openclaw-session-key: alexa:{userId}:care
-x-openclaw-message-channel: alexa
+```bash
+cd lambda && npm test
 ```
 
-## OpenClaw local (agente care)
+Cubre launch, help, pregunta válida, timeout, HTTP 401/500, JSON inválido, respuesta vacía/larga, y ausencia de datos sensibles en logs.
 
-Tu instalación principal está en **Docker** (`openclaw-openclaw-gateway-1`). El agente `care` ya existe en `~/Dev/openclaw-mauro/data/workspace/care`.
+## Fase 4 — Despliegue
+
+### 1. Prerrequisitos
+
+```bash
+# AWS SAM CLI
+sam --version
+
+# Dependencias Lambda
+cd lambda && npm install && cd ..
+cp .env.example .env   # credenciales locales
+```
+
+### 2. Build y deploy
+
+```bash
+sam validate --lint -t infrastructure/template.yaml
+sam build -t infrastructure/template.yaml
+sam deploy --guided \
+  --parameter-overrides \
+    OpenClawGatewayUrl=https://tu-gateway \
+    OpenClawGatewayToken=TU_TOKEN \
+    OpenClawAgentId=mauro \
+    AlexaSkillId=amzn1.ask.skill.TU_SKILL_ID
+```
+
+### 3. Alexa Developer Console
+
+1. Crear **Custom Skill** → nombre de invocación: `agente personal mauro`.
+2. Locale compatible con el dispositivo (`es-US`, `es-MX` o `es-ES`).
+3. Importar `skill-package/interactionModel.json`.
+4. Endpoint: ARN de la Lambda (output `LambdaArn` del stack).
+5. Pegar el **Skill ID** en el parámetro SAM si aún no lo hiciste.
+6. Activar **Development**; no enviar a certificación todavía.
+
+Referencias Amazon: [Steps to Build a Custom Skill](https://developer.amazon.com/en-US/docs/alexa/custom-skills/steps-to-build-a-custom-skill.html), [Host as AWS Lambda](https://developer.amazon.com/en-US/docs/alexa/custom-skills/host-a-custom-skill-as-an-aws-lambda-function.html).
+
+## OpenClaw local
 
 ```bash
 chmod +x scripts/setup-openclaw-care.sh
 ./scripts/setup-openclaw-care.sh
 ```
 
-Configura el token en `.env`:
+Configura `.env`:
 
 ```bash
-# URL directa al Gateway (no pasa por nginx :18789)
 OPENCLAW_GATEWAY_URL=http://127.0.0.1:18791
 OPENCLAW_GATEWAY_TOKEN=<token del gateway>
+OPENCLAW_AGENT_ID=mauro
 ```
 
-Si el contenedor no arranca, verifica que Docker apunte al repo real:
+La Lambda llama a:
 
-```bash
-# En openclaw/.env debe existir:
-OPENCLAW_PROJECT_DIR=/home/mauro/Dev/openclaw-mauro
-
-# Restaurar symlink canónico (scripts Python lo usan):
-sudo /home/mauro/Dev/openclaw-mauro/scripts/fix-openclaw-mount-path.sh
-cd ~/Dev/openclaw-mauro/openclaw && docker compose up -d openclaw-gateway
+```http
+POST /v1/chat/completions
+model: openclaw/mauro
+x-openclaw-session-key: alexa:{userId}:mauro
+x-openclaw-message-channel: alexa
 ```
-
-## Respuestas progresivas
-
-Si OpenClaw tarda más de ~2 s, Alexa recibe mensajes intermedios mientras Lambda sigue esperando:
-
-- "Dame un momento, Care está pensando." (2 s)
-
-La respuesta completa debe terminar antes del límite de Alexa. El cliente cancela
-OpenClaw a los 6 segundos para dejar margen a Lambda.
-
-Requiere `.withApiClient(new Alexa.DefaultApiClient())` en el handler (ya incluido).
-
-## Despliegue
-
-```bash
-cd lambda && npm install && cd ..
-cp .env.example .env   # editar credenciales locales si pruebas fuera de SAM
-
-sam build -t infrastructure/template.yaml
-sam deploy --guided \
-  --parameter-overrides \
-    OpenClawGatewayUrl=https://tu-gateway \
-    OpenClawGatewayToken=TU_TOKEN \
-    AlexaSkillId=amzn1.ask.skill.TU_SKILL_ID
-```
-
-Registra el ARN de la Lambda en [Alexa Developer Console](https://developer.amazon.com/alexa/console/ask) y sube `skill-package/interactionModel.json`.
 
 ## Variables de entorno
 
-| Variable                   | Default   | Descripción                 |
-| -------------------------- | --------- | ---------------------------- |
-| `OPENCLAW_GATEWAY_URL`   | —        | URL base del Gateway         |
-| `OPENCLAW_GATEWAY_TOKEN` | —        | Bearer token del Gateway     |
-| `OPENCLAW_AGENT_ID`      | `care`  | Agente destino               |
-| `OPENCLAW_TIMEOUT_MS`    | `6000` | Timeout de la petición HTTP |
-| `ALEXA_SKILL_ID`         | —      | ID permitido para invocar la Lambda |
+| Variable | Default | Descripción |
+| --- | --- | --- |
+| `OPENCLAW_GATEWAY_URL` | — | URL base del Gateway |
+| `OPENCLAW_GATEWAY_TOKEN` | — | Bearer token del Gateway |
+| `OPENCLAW_AGENT_ID` | `mauro` | Agente destino |
+| `OPENCLAW_TIMEOUT_MS` | `6000` | Timeout HTTP OpenClaw |
+| `ALEXA_SKILL_ID` | — | SkillId permitido |
 
-## Próximos agentes
+## Respuestas progresivas
 
-El mismo patrón sirve para DevOps, ventas, finanzas, monitoreo y soporte N1: añadir intents/slots y mapear a otro `agentId` en OpenClaw.
+Si OpenClaw tarda más de ~2 s:
+
+- "Dame un momento, Mauro está pensando."
+
+La respuesta completa debe terminar antes del límite de Alexa (~7 s efectivos).

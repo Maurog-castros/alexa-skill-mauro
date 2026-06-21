@@ -1,0 +1,46 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "arn:aws:lambda:us-east-1:121505946198:function:alexa-skill-mauro-CareAlexaSkillFunction-u6xEvjHhEZvi"
+        }
+      }
+    },
+    "publishingInformation": {
+      "locales": {
+        "es-ES": {
+          "name": "Agente Personal Mauro",
+          "summary": "Asistente de voz personal con OpenClaw",
+          "description": "Habla con Mauro, tu agente personal. Preguntas generales y respuestas breves optimizadas para voz.",
+          "examplePhrases": [
+            "Alexa, abre agente personal mauro",
+            "Alexa, pregunta a agente personal mauro qué hora es"
+          ],
+          "keywords": [
+            "mauro",
+            "asistente",
+            "agente personal"
+          ]
+        }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "Di: Alexa, abre agente personal mauro. Luego haz una pregunta corta.",
+      "category": "ORGANIZERS_AND_ASSISTANTS"
+    },
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "locales": {
+        "es-ES": {
+          "privacyPolicyUrl": "https://maurocastro.cl",
+          "termsOfUseUrl": "https://maurocastro.cl"
+        }
+      }
+    }
+  }
+}

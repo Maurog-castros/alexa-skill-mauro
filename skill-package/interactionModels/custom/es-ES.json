@@ -4,14 +4,14 @@
       "invocationName": "agente personal mauro",
       "intents": [
         {
-          "name": "LaunchCareIntent",
+          "name": "LaunchMauroIntent",
           "samples": [
-            "habla con care",
-            "abre care",
-            "inicia care",
-            "quiero hablar con care",
-            "conecta con care",
-            "activa care"
+            "habla con mauro",
+            "abre mauro",
+            "inicia mauro",
+            "quiero hablar con mauro",
+            "conecta con mauro",
+            "activa mauro"
           ]
         },
         {
@@ -23,10 +23,9 @@
             }
           ],
           "samples": [
-            "{message}",
             "dime {message}",
-            "pregúntale a care {message}",
-            "care {message}"
+            "pregúntale a mauro {message}",
+            "mauro {message}"
           ]
         },
         {

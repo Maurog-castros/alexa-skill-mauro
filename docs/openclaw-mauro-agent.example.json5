@@ -1,0 +1,19 @@
+// Ejemplo de agente mauro en ~/.openclaw/openclaw.json
+{
+  agents: {
+    list: [
+      {
+        id: "mauro",
+        default: true,
+        name: "Mauro",
+        workspace: "~/.openclaw/workspace-mauro",
+        agentDir: "~/.openclaw/agents/mauro/agent",
+        identity: {
+          name: "Mauro",
+          theme: "Asistente de voz personal",
+          emoji: "🎙️",
+        },
+      },
+    ],
+  },
+}

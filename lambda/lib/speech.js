@@ -1,4 +1,4 @@
-const { MAX_SPEECH_LENGTH } = require('./constants');
+const { MAX_SPEECH_LENGTH, MIN_SPEECH_LENGTH } = require('./constants');
 
 function normalizeForSpeech(text) {
   return text
@@ -16,7 +16,8 @@ function truncateForAlexa(text) {
     return escapeSsml(speech);
   }
 
-  const trimmed = speech.slice(0, MAX_SPEECH_LENGTH - 60).trim();
+  const targetLength = Math.max(MIN_SPEECH_LENGTH, MAX_SPEECH_LENGTH - 60);
+  const trimmed = speech.slice(0, targetLength).trim();
   return escapeSsml(`${trimmed}… Respuesta resumida por límite de voz.`);
 }
 

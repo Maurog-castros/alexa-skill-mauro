@@ -1,0 +1,43 @@
+// Plantilla: ~/.openclaw/openclaw.json
+// El script scripts/setup-openclaw-care.sh genera el token y copia los archivos.
+{
+  gateway: {
+    mode: "local",
+    port: 18789,
+    auth: {
+      mode: "token",
+      token: "__OPENCLAW_GATEWAY_TOKEN__",
+    },
+    http: {
+      endpoints: {
+        chatCompletions: { enabled: true },
+      },
+    },
+  },
+
+  agents: {
+    defaults: {
+      workspace: "~/.openclaw/workspace-mauro",
+    },
+    list: [
+      {
+        id: "mauro",
+        default: true,
+        name: "Mauro",
+        workspace: "~/.openclaw/workspace-mauro",
+        agentDir: "~/.openclaw/agents/mauro/agent",
+        identity: {
+          name: "Mauro",
+          theme: "Asistente de voz personal",
+          emoji: "🎙️",
+        },
+      },
+      {
+        id: "main",
+        name: "Main",
+        workspace: "~/.openclaw/workspace",
+        agentDir: "~/.openclaw/agents/main/agent",
+      },
+    ],
+  },
+}

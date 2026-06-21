@@ -14,9 +14,10 @@ test('escapes SSML characters', () => {
   assert.equal(truncateForAlexa('A < B & C'), 'A &lt; B &amp; C');
 });
 
-test('limits long spoken responses', () => {
+test('limits long spoken responses within 600-900 characters', () => {
   const speech = truncateForAlexa('x'.repeat(1200));
 
   assert.ok(speech.length <= 900);
+  assert.ok(speech.length >= 600);
   assert.match(speech, /Respuesta resumida/);
 });

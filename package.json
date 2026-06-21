@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "scripts": {
+    "ask": "ask",
+    "ask:configure": "ask configure",
+    "ask:deploy-skill": "ask deploy --target skill",
+    "deploy:skill": "ask deploy --target skill",
+    "deploy:lambda": "sam build -t infrastructure/template.yaml && sam deploy --parameter-overrides \"OpenClawGatewayUrl=${OPENCLAW_GATEWAY_URL}\" \"OpenClawGatewayToken=${OPENCLAW_GATEWAY_TOKEN}\" \"OpenClawAgentId=${OPENCLAW_AGENT_ID}\" \"AlexaSkillId=${ALEXA_SKILL_ID}\""
+  },
+  "devDependencies": {
+    "ask-cli": "^2.30.7"
+  }
+}

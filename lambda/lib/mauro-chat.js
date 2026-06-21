@@ -1,34 +1,38 @@
+const { DEFAULT_AGENT_ID } = require('./constants');
+const { logOpenClawRequest, classifyOpenClawError } = require('./logger');
 const { OpenClawClient } = require('./openclaw-client');
 const { scheduleProgressiveResponses } = require('./progressive-response');
 
 const openclaw = new OpenClawClient();
 
-async function chatWithCare(handlerInput, { userId, message }) {
+async function chatWithMauro(handlerInput, { userId, message }) {
   const cancelProgressive = scheduleProgressiveResponses(handlerInput);
   const startedAt = Date.now();
   const requestId = handlerInput.requestEnvelope.request.requestId;
+  const agent = openclaw.agentId || DEFAULT_AGENT_ID;
 
   try {
     const reply = await openclaw.chat({ userId, message });
-    console.log(JSON.stringify({
-      event: 'openclaw_request',
+    logOpenClawRequest({
       requestId,
-      status: 'ok',
+      agent,
+      result: 'ok',
       durationMs: Date.now() - startedAt,
-    }));
+    });
     return reply;
   } catch (error) {
-    console.error(JSON.stringify({
-      event: 'openclaw_request',
+    const { result, errorType } = classifyOpenClawError(error);
+    logOpenClawRequest({
       requestId,
-      status: 'error',
-      errorType: error.constructor.name,
+      agent,
+      result,
       durationMs: Date.now() - startedAt,
-    }));
+      errorType,
+    });
     throw error;
   } finally {
     cancelProgressive();
   }
 }
 
-module.exports = { chatWithCare };
+module.exports = { chatWithMauro };

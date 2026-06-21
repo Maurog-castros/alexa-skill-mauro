@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Alexa skill bridge hacia el agente OpenClaw /care
+Description: Alexa skill bridge hacia el agente OpenClaw mauro
 
 Parameters:
   OpenClawGatewayUrl:
@@ -12,16 +12,20 @@ Parameters:
     Description: Token de autenticación del Gateway OpenClaw
   OpenClawAgentId:
     Type: String
-    Default: care
+    Default: mauro
     Description: ID del agente OpenClaw destino
   AlexaSkillId:
     Type: String
-    Description: ID de la skill creada en Alexa Developer Console
+    Default: ''
+    Description: ID de la skill en Alexa Developer Console (vacío = registrar ARN manualmente primero)
+
+Conditions:
+  HasAlexaSkillId: !Not [!Equals [!Ref AlexaSkillId, '']]
 
 Globals:
   Function:
     Timeout: 30
-    Runtime: nodejs20.x
+    Runtime: nodejs24.x
     MemorySize: 256
 
 Resources:
@@ -30,20 +34,27 @@ Resources:
     Properties:
       CodeUri: ../lambda/
       Handler: index.handler
-      Description: Puente Alexa -> OpenClaw agente care
+      Description: Puente Alexa -> OpenClaw agente mauro
       Environment:
         Variables:
           OPENCLAW_GATEWAY_URL: !Ref OpenClawGatewayUrl
           OPENCLAW_GATEWAY_TOKEN: !Ref OpenClawGatewayToken
           OPENCLAW_AGENT_ID: !Ref OpenClawAgentId
           ALEXA_SKILL_ID: !Ref AlexaSkillId
-      Events:
-        AlexaSkill:
-          Type: AlexaSkill
-          Properties:
-            SkillId: !Ref AlexaSkillId
+
+  CareAlexaSkillPermission:
+    Type: AWS::Lambda::Permission
+    Condition: HasAlexaSkillId
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CareAlexaSkillFunction
+      EventSourceToken: !Ref AlexaSkillId
+      Principal: alexa-appkit.amazon.com
 
 Outputs:
   LambdaArn:
     Description: ARN de la función Lambda para registrar en Alexa Developer Console
     Value: !GetAtt CareAlexaSkillFunction.Arn
+  LambdaName:
+    Description: Nombre de la función Lambda
+    Value: !Ref CareAlexaSkillFunction

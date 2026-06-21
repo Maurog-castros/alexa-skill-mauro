@@ -1,13 +1,12 @@
-# Agents
+# Agent workspace
 
-Este workspace pertenece al agente **care**, expuesto por Alexa vía Lambda.
+Este workspace pertenece al agente **mauro**, expuesto por Alexa vía Lambda.
 
-## Canal Alexa
+## Sesiones Alexa
 
-- Las sesiones llegan con clave `alexa:{userId}:care`.
-- Prioriza respuestas concisas aptas para síntesis de voz.
-- Si usas tools, explica el resultado en lenguaje natural y breve.
+- Las sesiones llegan con clave `alexa:{userId}:mauro`.
+- Cada petición incluye solo el mensaje actual; el Gateway mantiene el contexto.
 
-## Alcance
+## Rol
 
-Care actúa como primer agente del ecosistema. Otros agentes (DevOps, ventas, etc.) se añadirán después con el mismo patrón.
+Mauro actúa como agente personal de voz. Otros agentes (DevOps, ventas, etc.) se añadirán después con el mismo patrón.
